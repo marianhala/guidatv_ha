@@ -1,4 +1,4 @@
-# Guida TV — Casa Gorgonzola (versione deployabile)
+# Guida TV — Casa (versione deployabile)
 
 ## Struttura
 
@@ -67,50 +67,6 @@ location = /api/config.php {
 }
 ```
 
-## Cosa è cambiato rispetto al file HTML originale
-
-Il file che mi hai mandato era un ottimo prototipo, ma per poterlo
-pubblicare su un hosting reale e farlo funzionare in modo affidabile ho
-risolto questi problemi:
-
-1. **Niente più proxy CORS di terze parti** (`allorigins.win`,
-   `corsproxy.io`, `cors.isomorphic-git.org`). Erano il punto più fragile:
-   servizi gratuiti, senza SLA, spesso lenti o offline, e in più il
-   traffico del tuo sito passava per server di sconosciuti. Ora
-   `api/epg.php` scarica l'XMLTV direttamente dal tuo hosting (richiesta
-   server-to-server, zero problemi di CORS) e lo mette in cache su disco.
-2. **Cache server-side dell'EPG** (30 minuti, configurabile): prima ogni
-   visitatore scaricava l'intero file XMLTV (spesso diversi MB) da zero;
-   ora lo fa il server una volta ogni mezz'ora al massimo, e serve tutti
-   i visitatori dalla cache locale — molto più veloce e più rispettoso
-   verso le fonti EPG pubbliche.
-3. **Fallback "stale cache"**: se tutte le fonti EPG risultano irraggiungibili,
-   il sito continua a mostrare l'ultimo EPG scaricato con buon esito (fino
-   a 6 ore) invece di andare subito in errore, segnalandolo comunque in
-   modo visibile ("CACHE VECCHIA").
-4. **API key TMDB non più esposta nel browser**: prima veniva salvata in
-   `localStorage` e inviata in chiaro in ogni URL verso TMDB (chiunque
-   apra i DevTools la vede). Ora vive solo in `api/config.php` sul server;
-   il client chiama `api/tmdb.php?title=...` e riceve solo poster/trama.
-5. **Cache anche per TMDB** (7 giorni per titolo): riduce drasticamente le
-   chiamate verso TMDB e velocizza il caricamento dei poster ai
-   caricamenti successivi.
-6. **Protezione da SSRF** sulla sorgente EPG personalizzata: se imposti un
-   URL EPG custom dal pannello Config, il server rifiuta IP privati/loopback
-   (es. `127.0.0.1`, `192.168.x.x`) per evitare che il tuo hosting possa
-   essere usato come proxy verso la tua rete interna.
-7. **Migliorie minori**: `aria-live` sullo stato EPG per la sintesi vocale,
-   pulizia del pannello di configurazione (un campo in meno da compilare).
-
-## Cosa NON ho toccato (di proposito)
-
-- L'integrazione con Home Assistant resta lato client (URL + token
-  salvati in `localStorage` del browser): è corretto così, perché il tuo
-  hosting web pubblico normalmente **non può raggiungere** la tua Home
-  Assistant sulla rete locale di casa — è il tuo browser, sulla stessa
-  rete di casa, a doverci parlare direttamente.
-- Tutta l'estetica, il layout, l'orologio "Casio" e la logica di
-  rendering dei canali sono rimasti identici: erano già solidi.
 
 ## Un avviso sul token Home Assistant
 
