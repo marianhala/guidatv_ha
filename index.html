@@ -1,0 +1,827 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Guida TV — Casa Gorgonzola</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&display=swap');
+  :root {
+    --bg:#0a0c10; --bg2:#0e1117; --bg3:#141820; --panel:#161c26;
+    --border:#1e2a3a; --accent:#00d4ff; --accent2:#ff6b35; --accent3:#39ff14;
+    --text:#c8d8e8; --text-dim:#5a7a9a; --text-bright:#e8f4ff; --live:#ff3333;
+    --casio-bg:#1a1f0a; --casio-green:#a8ff00; --casio-dim:#3a4a00;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:var(--bg);color:var(--text);font-family:'Rajdhani',sans-serif;min-height:100vh;overflow-x:hidden;}
+  body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(0,212,255,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(0,212,255,0.03) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0;}
+
+  header{position:sticky;top:0;z-index:100;background:linear-gradient(180deg,#0a0c10 0%,rgba(10,12,16,0.97) 100%);border-bottom:1px solid var(--border);padding:10px 20px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;}
+  .header-left{display:flex;flex-direction:column;gap:2px;}
+  .logo{font-family:'Orbitron',monospace;font-weight:900;font-size:1.2rem;color:var(--accent);text-shadow:0 0 20px rgba(0,212,255,0.5);letter-spacing:3px;text-transform:uppercase;}
+  .logo span{color:var(--accent2);}
+  .epg-status{font-family:'Share Tech Mono',monospace;font-size:0.65rem;color:var(--text-dim);letter-spacing:1px;}
+  .epg-status .dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--accent3);margin-right:5px;animation:pulse 2s infinite;}
+  .epg-status .dot.loading{background:var(--accent2);animation:blink 0.5s infinite;}
+  .epg-status .dot.error{background:var(--live);animation:none;}
+  @keyframes pulse{0%,100%{opacity:1;box-shadow:0 0 4px var(--accent3);}50%{opacity:0.4;box-shadow:none;}}
+  @keyframes blink{0%,100%{opacity:1;}50%{opacity:0;}}
+
+  .casio-clock{margin-left:auto;background:var(--casio-bg);border:2px solid #3a4a1a;border-radius:6px;padding:8px 14px;box-shadow:0 0 0 1px #1a2a0a,0 0 15px rgba(168,255,0,0.15),inset 0 0 10px rgba(0,0,0,0.5);position:relative;min-width:180px;}
+  .casio-clock::before{content:'CASA GORGONZOLA';position:absolute;top:3px;left:50%;transform:translateX(-50%);font-family:'Share Tech Mono',monospace;font-size:0.45rem;color:var(--casio-dim);letter-spacing:2px;white-space:nowrap;}
+  .casio-time{font-family:'Share Tech Mono',monospace;font-size:2rem;color:var(--casio-green);text-shadow:0 0 10px rgba(168,255,0,0.6),0 0 20px rgba(168,255,0,0.3);letter-spacing:4px;text-align:center;margin-top:8px;line-height:1;}
+  .casio-date{font-family:'Share Tech Mono',monospace;font-size:0.6rem;color:var(--casio-dim);text-align:center;letter-spacing:2px;margin-top:3px;}
+  .casio-date .today-date{color:rgba(168,255,0,0.6);}
+
+  .day-bar{background:var(--bg2);border-bottom:1px solid var(--border);padding:8px 20px;display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;position:sticky;top:73px;z-index:90;}
+  .day-bar::-webkit-scrollbar{display:none;}
+  .day-btn{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:0.8rem;letter-spacing:1px;padding:5px 14px;border:1px solid var(--border);background:transparent;color:var(--text-dim);border-radius:3px;cursor:pointer;white-space:nowrap;transition:all 0.2s;text-transform:uppercase;}
+  .day-btn:hover{border-color:var(--accent);color:var(--accent);}
+  .day-btn.active{background:var(--accent);color:#000;border-color:var(--accent);box-shadow:0 0 12px rgba(0,212,255,0.4);}
+
+  .filter-bar{background:var(--bg2);border-bottom:1px solid var(--border);padding:8px 20px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;position:sticky;top:113px;z-index:89;}
+  .filter-label{font-family:'Orbitron',monospace;font-size:0.55rem;color:var(--text-dim);letter-spacing:2px;text-transform:uppercase;white-space:nowrap;}
+  .filter-chips{display:flex;gap:5px;flex-wrap:wrap;flex:1;}
+  .chip{font-family:'Rajdhani',sans-serif;font-weight:600;font-size:0.75rem;padding:3px 10px;border:1px solid var(--border);background:transparent;color:var(--text-dim);border-radius:20px;cursor:pointer;transition:all 0.15s;letter-spacing:0.5px;white-space:nowrap;}
+  .chip:hover{border-color:var(--accent2);color:var(--accent2);}
+  .chip.active{background:rgba(255,107,53,0.15);border-color:var(--accent2);color:var(--accent2);box-shadow:0 0 8px rgba(255,107,53,0.2);}
+  .search-box{font-family:'Rajdhani',sans-serif;font-size:0.85rem;padding:4px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:3px;color:var(--text);outline:none;width:180px;transition:border-color 0.2s;}
+  .search-box:focus{border-color:var(--accent);}
+  .search-box::placeholder{color:var(--text-dim);}
+  .config-btn{font-family:'Orbitron',monospace;font-size:0.55rem;padding:6px 10px;background:transparent;border:1px solid var(--border);color:var(--text-dim);border-radius:3px;cursor:pointer;letter-spacing:1px;text-transform:uppercase;transition:all 0.2s;}
+  .config-btn:hover{border-color:var(--accent);color:var(--accent);}
+
+  main{position:relative;z-index:1;padding:16px 20px;max-width:1400px;margin:0 auto;}
+
+  .channel-card{background:var(--panel);border:1px solid var(--border);border-radius:6px;margin-bottom:10px;overflow:hidden;transition:border-color 0.2s;}
+  .channel-card:hover{border-color:rgba(0,212,255,0.3);}
+  .channel-header{display:flex;align-items:center;gap:12px;padding:10px 14px;background:rgba(0,0,0,0.3);border-bottom:1px solid var(--border);cursor:pointer;user-select:none;}
+  .ch-number{font-family:'Orbitron',monospace;font-weight:900;font-size:0.85rem;color:var(--accent);min-width:32px;text-align:center;}
+  .ch-logo{width:36px;height:36px;border-radius:4px;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-family:'Orbitron',monospace;font-size:0.5rem;font-weight:700;color:var(--accent);border:1px solid var(--border);overflow:hidden;flex-shrink:0;}
+  .ch-logo img{width:100%;height:100%;object-fit:contain;padding:3px;}
+  .ch-name{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;color:var(--text-bright);letter-spacing:1px;flex:1;}
+  .ch-current{font-size:0.8rem;color:var(--text-dim);flex:2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .ch-current strong{color:var(--text);}
+  .live-badge{font-family:'Orbitron',monospace;font-size:0.5rem;padding:2px 6px;background:var(--live);color:#fff;border-radius:2px;letter-spacing:1px;animation:pulse-red 2s infinite;flex-shrink:0;}
+  @keyframes pulse-red{0%,100%{box-shadow:0 0 4px rgba(255,51,51,0.8);}50%{box-shadow:none;}}
+  .expand-icon{color:var(--text-dim);font-size:0.7rem;transition:transform 0.2s;flex-shrink:0;}
+  .channel-card.expanded .expand-icon{transform:rotate(180deg);}
+
+  .program-list{display:none;padding:8px 14px;}
+  .channel-card.expanded .program-list{display:block;}
+
+  .program-item{display:flex;align-items:flex-start;gap:10px;padding:7px 0;border-bottom:1px solid rgba(30,42,58,0.5);position:relative;}
+  .program-item:last-child{border-bottom:none;}
+  .program-item.is-now{background:rgba(0,212,255,0.04);border-radius:4px;padding:7px 8px;margin:0 -8px;border-left:2px solid var(--accent);border-bottom:1px solid rgba(30,42,58,0.5);}
+  .prog-time{font-family:'Share Tech Mono',monospace;font-size:0.75rem;color:var(--text-dim);min-width:42px;padding-top:2px;flex-shrink:0;}
+  .program-item.is-now .prog-time{color:var(--accent);}
+  .prog-info{flex:1;min-width:0;}
+  .prog-title{font-family:'Rajdhani',sans-serif;font-weight:600;font-size:0.9rem;color:var(--text);line-height:1.3;}
+  .program-item.is-now .prog-title{color:var(--text-bright);font-weight:700;}
+
+  .prog-desc{font-size:0.75rem;color:var(--text-dim);margin-top:3px;line-height:1.5;}
+  .prog-desc.clamped{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+  .prog-expand-btn{font-family:'Share Tech Mono',monospace;font-size:0.6rem;color:var(--accent);background:none;border:none;cursor:pointer;padding:0;margin-top:2px;letter-spacing:1px;opacity:0.7;transition:opacity 0.15s;}
+  .prog-expand-btn:hover{opacity:1;}
+
+  .prog-poster{width:52px;min-width:52px;height:78px;border-radius:3px;overflow:hidden;background:var(--bg3);border:1px solid var(--border);flex-shrink:0;position:relative;align-self:flex-start;}
+  .prog-poster img{width:100%;height:100%;object-fit:cover;display:block;opacity:0;transition:opacity 0.3s;}
+  .prog-poster img.loaded{opacity:1;}
+  .prog-poster .poster-placeholder{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-family:'Orbitron',monospace;font-size:0.55rem;color:var(--text-dim);letter-spacing:1px;text-align:center;padding:4px;line-height:1.3;}
+  .poster-loading{width:16px;height:16px;border:1px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 0.8s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+
+  .modal-poster-row{display:flex;gap:14px;align-items:flex-start;margin-bottom:16px;}
+  .modal-poster{width:70px;min-width:70px;height:105px;border-radius:4px;overflow:hidden;background:var(--bg3);border:1px solid var(--border);flex-shrink:0;position:relative;}
+  .modal-poster img{width:100%;height:100%;object-fit:cover;display:block;opacity:0;transition:opacity 0.3s;}
+  .modal-poster img.loaded{opacity:1;}
+  .modal-meta{flex:1;min-width:0;}
+  .modal-overview{font-size:0.78rem;color:var(--text-dim);line-height:1.5;margin-top:6px;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden;}
+
+  .prog-duration{font-family:'Share Tech Mono',monospace;font-size:0.65rem;color:var(--text-dim);padding-top:2px;white-space:nowrap;flex-shrink:0;}
+  .prog-progress{height:2px;background:var(--border);border-radius:1px;margin-top:5px;overflow:hidden;}
+  .prog-progress-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:1px;transition:width 1s linear;}
+
+  .open-tv-btn{font-family:'Orbitron',monospace;font-size:0.5rem;padding:4px 8px;background:transparent;border:1px solid var(--accent2);color:var(--accent2);border-radius:3px;cursor:pointer;letter-spacing:1px;transition:all 0.2s;white-space:nowrap;flex-shrink:0;align-self:center;text-transform:uppercase;}
+  .open-tv-btn:hover{background:rgba(255,107,53,0.15);box-shadow:0 0 10px rgba(255,107,53,0.3);}
+
+  .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.8);backdrop-filter:blur(4px);z-index:1000;align-items:center;justify-content:center;}
+  .modal-overlay.show{display:flex;}
+  .modal{background:var(--panel);border:1px solid var(--accent);border-radius:8px;padding:24px;max-width:420px;width:90%;box-shadow:0 0 40px rgba(0,212,255,0.2);}
+  .modal-title{font-family:'Orbitron',monospace;font-size:0.7rem;color:var(--accent);letter-spacing:3px;text-transform:uppercase;margin-bottom:12px;}
+  .modal-program{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1.1rem;color:var(--text-bright);margin-bottom:4px;}
+  .modal-channel{font-size:0.8rem;color:var(--text-dim);}
+  .modal-divider{border:none;border-top:1px solid var(--border);margin:16px 0;}
+  .tv-choice-label{font-family:'Orbitron',monospace;font-size:0.55rem;color:var(--text-dim);letter-spacing:2px;margin-bottom:10px;text-transform:uppercase;}
+  .tv-buttons{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;}
+  .tv-btn{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:0.95rem;padding:14px 10px;border:1px solid var(--border);background:var(--bg3);color:var(--text);border-radius:5px;cursor:pointer;transition:all 0.2s;text-align:center;}
+  .tv-btn .tv-icon{font-size:1.4rem;display:block;margin-bottom:4px;}
+  .tv-btn .tv-label{display:block;font-size:0.8rem;color:var(--text-dim);}
+  .tv-btn:hover{border-color:var(--accent);color:var(--accent);background:rgba(0,212,255,0.06);box-shadow:0 0 12px rgba(0,212,255,0.15);}
+  .tv-btn.selected{border-color:var(--accent);background:rgba(0,212,255,0.1);color:var(--accent);}
+  .action-info{font-size:0.75rem;color:var(--text-dim);background:var(--bg3);border:1px solid var(--border);border-radius:4px;padding:8px 12px;margin-bottom:14px;line-height:1.6;min-height:40px;white-space:pre-line;}
+  .modal-actions{display:flex;gap:8px;}
+  .config-form{display:flex;flex-direction:column;gap:10px;margin-bottom:14px;}
+  .config-field{display:flex;flex-direction:column;gap:4px;}
+  .config-field label{font-family:'Orbitron',monospace;font-size:0.55rem;color:var(--text-dim);letter-spacing:1.5px;text-transform:uppercase;}
+  .config-field input{font-family:'Share Tech Mono',monospace;font-size:0.72rem;padding:8px 10px;background:var(--bg3);border:1px solid var(--border);border-radius:4px;color:var(--text);outline:none;}
+  .config-field input:focus{border-color:var(--accent);}
+  .config-help{font-size:0.72rem;color:var(--text-dim);line-height:1.45;margin-bottom:14px;}
+  .btn-confirm{flex:1;font-family:'Orbitron',monospace;font-size:0.6rem;padding:10px;background:var(--accent);color:#000;border:none;border-radius:4px;cursor:pointer;letter-spacing:2px;font-weight:700;text-transform:uppercase;transition:all 0.2s;}
+  .btn-confirm:hover{box-shadow:0 0 16px rgba(0,212,255,0.5);}
+  .btn-confirm:disabled{opacity:0.4;cursor:not-allowed;}
+  .btn-cancel{font-family:'Rajdhani',sans-serif;font-weight:600;font-size:0.85rem;padding:10px 16px;background:transparent;color:var(--text-dim);border:1px solid var(--border);border-radius:4px;cursor:pointer;transition:all 0.2s;}
+  .btn-cancel:hover{border-color:var(--live);color:var(--live);}
+
+  .toast{position:fixed;bottom:20px;right:20px;background:var(--panel);border:1px solid var(--accent3);border-radius:6px;padding:12px 18px;font-family:'Share Tech Mono',monospace;font-size:0.75rem;color:var(--accent3);z-index:2000;box-shadow:0 0 20px rgba(57,255,20,0.2);transform:translateY(60px);opacity:0;transition:all 0.3s;max-width:300px;}
+  .toast.error{border-color:var(--live);color:var(--live);box-shadow:0 0 20px rgba(255,51,51,0.2);}
+  .toast.show{transform:translateY(0);opacity:1;}
+
+  .loading-state{text-align:center;padding:60px 20px;font-family:'Orbitron',monospace;font-size:0.7rem;color:var(--text-dim);letter-spacing:3px;}
+  .loading-bar{width:200px;height:2px;background:var(--border);margin:16px auto;border-radius:1px;overflow:hidden;}
+  .loading-bar-fill{height:100%;width:30%;background:var(--accent);border-radius:1px;animation:scan 1.5s ease-in-out infinite;}
+  @keyframes scan{0%{transform:translateX(-100%);}100%{transform:translateX(400%);}}
+  .error-state{text-align:center;padding:40px 20px;font-family:'Rajdhani',sans-serif;color:var(--text-dim);}
+  .error-state h3{font-family:'Orbitron',monospace;color:var(--accent2);font-size:0.8rem;letter-spacing:2px;margin-bottom:8px;}
+
+  ::-webkit-scrollbar{width:4px;height:4px;}
+  ::-webkit-scrollbar-track{background:var(--bg2);}
+  ::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+  ::-webkit-scrollbar-thumb:hover{background:var(--accent);}
+
+  @media(max-width:600px){
+    header{padding:8px 12px;gap:10px;}
+    .logo{font-size:0.9rem;}
+    .casio-clock{min-width:150px;}
+    .casio-time{font-size:1.6rem;letter-spacing:2px;}
+    .day-bar{top:62px;padding:6px 12px;}
+    .filter-bar{top:100px;padding:6px 12px;}
+    main{padding:10px 12px;}
+    .ch-current{display:none;}
+    .prog-poster{width:40px;min-width:40px;height:60px;}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <div class="logo">Guida <span>TV</span></div>
+    <div class="epg-status" id="epgStatus" aria-live="polite">
+      <span class="dot loading" id="epgDot"></span>
+      <span id="epgStatusText">CARICAMENTO DATI EPG...</span>
+    </div>
+  </div>
+  <div class="casio-clock">
+    <div class="casio-time" id="clockTime">--:--:--</div>
+    <div class="casio-date"><span class="today-date" id="clockDate">-- --- ----</span></div>
+  </div>
+</header>
+
+<div class="day-bar" id="dayBar"></div>
+
+<div class="filter-bar">
+  <span class="filter-label">CANALI</span>
+  <div class="filter-chips" id="filterChips"></div>
+  <input type="text" class="search-box" id="searchBox" placeholder="Cerca programma...">
+  <button class="config-btn" id="btnConfig" type="button">Config</button>
+</div>
+
+<main id="mainContent">
+  <div class="loading-state">
+    <div>ACQUISIZIONE DATI EPG ITALIANI</div>
+    <div class="loading-bar"><div class="loading-bar-fill"></div></div>
+    <div style="font-size:0.55rem;margin-top:8px;color:var(--text-dim)">FONTE: XMLTV EPG ITALIA</div>
+  </div>
+</main>
+
+<div class="modal-overlay" id="tvModal">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="tvModalTitle">
+    <div class="modal-title" id="tvModalTitle">▶ TRASMETTI SU TV</div>
+    <div class="modal-poster-row">
+      <div class="modal-poster" id="modalPosterBox">
+        <div class="poster-placeholder"><div class="poster-loading"></div></div>
+      </div>
+      <div class="modal-meta">
+        <div class="modal-program" id="modalProgram">—</div>
+        <div class="modal-channel" id="modalChannel">—</div>
+        <div class="modal-overview" id="modalOverview"></div>
+      </div>
+    </div>
+    <hr class="modal-divider">
+    <div class="tv-choice-label">SELEZIONA TELEVISORE</div>
+    <div class="tv-buttons">
+      <button class="tv-btn" id="btnSala" type="button">
+        <span class="tv-icon">📺</span>TV SALA<span class="tv-label">Sony KE-55A89</span>
+      </button>
+      <button class="tv-btn" id="btnCucina" type="button">
+        <span class="tv-icon">📺</span>TV CUCINA<span class="tv-label">Sony KD-43X81J</span>
+      </button>
+    </div>
+    <div class="action-info" id="actionInfo">Seleziona un televisore per vedere le azioni disponibili.</div>
+    <div class="modal-actions">
+      <button class="btn-confirm" id="btnConfirm" type="button" disabled>INVIA ALLA TV</button>
+      <button class="btn-cancel" id="btnCancelTv" type="button">ANNULLA</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="configModal">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="configModalTitle">
+    <div class="modal-title" id="configModalTitle">CONFIGURAZIONE</div>
+    <div class="config-help">HA URL/token e URL EPG personalizzato sono salvati solo in questo browser (localStorage). La chiave TMDB è configurata una volta sola lato server in api/config.php e non viene mai esposta al browser.</div>
+    <div class="config-form">
+      <div class="config-field">
+        <label for="configEpgUrl">EPG XMLTV URL personalizzato (avanzato)</label>
+        <input id="configEpgUrl" type="url" placeholder="Lascia vuoto per usare le fonti configurate sul server">
+      </div>
+      <div class="config-field">
+        <label for="configHaUrl">Home Assistant URL</label>
+        <input id="configHaUrl" type="url" placeholder="http://homeassistant.local:8123">
+      </div>
+      <div class="config-field">
+        <label for="configHaToken">Home Assistant token</label>
+        <input id="configHaToken" type="password" autocomplete="off" placeholder="Token lungo">
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-confirm" id="btnSaveConfig" type="button">SALVA</button>
+      <button class="btn-cancel" id="btnResetEpg" type="button">EPG AUTO</button>
+      <button class="btn-cancel" id="btnCloseConfig" type="button">ANNULLA</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ==========================================
+// CONFIGURAZIONE
+// ==========================================
+const DEFAULT_HA_URL = (window.location.hostname==='localhost'||window.location.hostname.startsWith('192.168')||window.location.hostname.endsWith('.local')) ? '' : 'http://homeassistant.local:8123';
+// EPG e TMDB passano sempre dal backend PHP dello stesso dominio: niente più proxy CORS di terze parti.
+const EPG_ENDPOINT = 'api/epg.php';
+const TMDB_ENDPOINT = 'api/tmdb.php';
+const CONFIG_KEYS = {
+  epgUrl:'guidaTvEpgUrl',
+  haUrl:'guidaTvHaUrl',
+  haToken:'guidaTvHaToken'
+};
+let appConfig = loadConfig();
+
+const TV_ENTITIES = { sala:'media_player.sony_ke_55a89', cucina:'media_player.sony_kd_43x81j' };
+const APP_IDS = {
+  rai:      {appId:'com.rai.raiplay',           name:'RaiPlay',          source:'RaiPlay'},
+  mediaset: {appId:'com.mediaset.app.infinity',  name:'Mediaset Infinity',source:'Mediaset Infinity'},
+  la7:      {appId:'it.mediadigitale.la7',       name:'La7',             source:'La7'},
+  discovery:{appId:'com.discovery.discoveryplus',name:'Discovery+',      source:'Discovery+'},
+  dtt:      {appId:null,                          name:'Digitale Terrestre',source:null}
+};
+
+const CHANNELS_CONFIG = [
+  {lcn:1, id:'rai-1',        name:'Rai 1',        app:'rai',      tvLink:'https://www.raiplay.it/diretta/rai1', aliases:['rai1']},
+  {lcn:2, id:'rai-2',        name:'Rai 2',        app:'rai',      tvLink:'https://www.raiplay.it/diretta/rai2', aliases:['rai2']},
+  {lcn:3, id:'rai-3',        name:'Rai 3',        app:'rai',      tvLink:'https://www.raiplay.it/diretta/rai3', aliases:['rai3']},
+  {lcn:4, id:'rete-4',       name:'Rete 4',       app:'mediaset', tvLink:null},
+  {lcn:5, id:'canale-5',     name:'Canale 5',     app:'mediaset', tvLink:null},
+  {lcn:6, id:'italia-1',     name:'Italia 1',     app:'mediaset', tvLink:null},
+  {lcn:7, id:'la7',          name:'La 7',         app:'la7',      tvLink:null},
+  {lcn:8, id:'tv8',          name:'TV8',          app:'dtt',      tvLink:null},
+  {lcn:9, id:'nove',         name:'NOVE',         app:'discovery',tvLink:null},
+  {lcn:10,id:'rai4',         name:'Rai 4',        app:'rai',      tvLink:'https://www.raiplay.it/diretta/rai4', aliases:['rai4']},
+  {lcn:11,id:'rai5',         name:'Rai 5',        app:'rai',      tvLink:'https://www.raiplay.it/diretta/rai5', aliases:['rai5']},
+  {lcn:12,id:'rai-movie',    name:'Rai Movie',    app:'rai',      tvLink:'https://www.raiplay.it/diretta/raimovie'},
+  {lcn:13,id:'rai-yoyo',     name:'Rai YoYo',     app:'rai',      tvLink:'https://www.raiplay.it/diretta/raiyoyo'},
+  {lcn:14,id:'rai-gulp',     name:'Rai Gulp',     app:'rai',      tvLink:'https://www.raiplay.it/diretta/raigulp'},
+  {lcn:15,id:'rai-premium',  name:'Rai Premium',  app:'rai',      tvLink:'https://www.raiplay.it/diretta/raipremium'},
+  {lcn:20,id:'italia2',      name:'Italia 2',     app:'mediaset', tvLink:null},
+  {lcn:21,id:'iris',         name:'Iris',         app:'mediaset', tvLink:null},
+  {lcn:22,id:'mediaset-extra',name:'Mediaset Extra',app:'mediaset',tvLink:null},
+  {lcn:23,id:'la7d',         name:'La7d',         app:'la7',      tvLink:null},
+  {lcn:25,id:'top-crime',    name:'Top Crime',    app:'dtt',      tvLink:null},
+  {lcn:26,id:'cielo',        name:'Cielo',        app:'dtt',      tvLink:null},
+  {lcn:27,id:'tv2000',       name:'TV2000',       app:'dtt',      tvLink:null},
+  {lcn:28,id:'canale-nord',  name:'TgCom24',      app:'mediaset', tvLink:null, aliases:['tgcom24']},
+  {lcn:29,id:'focus',        name:'Focus',        app:'mediaset', tvLink:null},
+  {lcn:30,id:'boing',        name:'Boing',        app:'mediaset', tvLink:null},
+  {lcn:31,id:'cartoon-network',name:'Cartoon Network',app:'dtt', tvLink:null},
+  {lcn:34,id:'cine34',       name:'Cine34',       app:'mediaset', tvLink:'https://mediasetinfinity.mediaset.it/cine34', aliases:['cine34']},
+  {lcn:35,id:'mediaset-20',  name:'20 Mediaset',  app:'mediaset', tvLink:null, aliases:['mediaset20']},
+  {lcn:38,id:'giallo',       name:'Giallo',       app:'dtt',      tvLink:null},
+  {lcn:39,id:'rai-storia',   name:'Rai Storia',   app:'rai',      tvLink:'https://www.raiplay.it/diretta/raistoria'},
+  {lcn:41,id:'rai-scuola',   name:'Rai Scuola',   app:'rai',      tvLink:'https://www.raiplay.it/diretta/raiscuola'},
+  {lcn:49,id:'real-time',    name:'Real Time',    app:'discovery',tvLink:null},
+  {lcn:52,id:'dmax',         name:'DMAX',         app:'discovery',tvLink:null},
+  {lcn:55,id:'food-network', name:'Food Network', app:'discovery',tvLink:null},
+];
+
+const FILTER_GROUPS = [
+  {id:'all',      label:'TUTTI',   lcns:null},
+  {id:'rai',      label:'RAI',     lcns:[1,2,3,10,11,12,13,14,15,39,41]},
+  {id:'mediaset', label:'MEDIASET',lcns:[4,5,6,20,21,22,28,29,30,34,35]},
+  {id:'la7',      label:'LA7',     lcns:[7,23]},
+  {id:'discovery',label:'DISC.+',  lcns:[9,49,52,55]},
+  {id:'others',   label:'ALTRI',   lcns:[8,25,26,27,31,38]},
+];
+
+// ==========================================
+// STATO
+// ==========================================
+let epgData={}, tmdbCache={}, selectedDay=0, activeFilter='all', searchQuery='', lastUpdate=null, selectedTV=null, modalChannelData={}, epgReady=false, epgLoading=false, epgError='';
+
+// ==========================================
+// CONFIG LOCALE
+// ==========================================
+function loadConfig(){
+  return {
+    epgUrl:localStorage.getItem(CONFIG_KEYS.epgUrl)||'',
+    haUrl:localStorage.getItem(CONFIG_KEYS.haUrl)||DEFAULT_HA_URL,
+    haToken:localStorage.getItem(CONFIG_KEYS.haToken)||''
+  };
+}
+
+function saveConfig(values){
+  appConfig={
+    epgUrl:(values.epgUrl||'').trim(),
+    haUrl:(values.haUrl||'').trim(),
+    haToken:(values.haToken||'').trim()
+  };
+  if(appConfig.epgUrl) localStorage.setItem(CONFIG_KEYS.epgUrl,appConfig.epgUrl);
+  else localStorage.removeItem(CONFIG_KEYS.epgUrl);
+  localStorage.setItem(CONFIG_KEYS.haUrl,appConfig.haUrl);
+  localStorage.setItem(CONFIG_KEYS.haToken,appConfig.haToken);
+}
+
+function openConfigModal(){
+  document.getElementById('configEpgUrl').value=appConfig.epgUrl;
+  document.getElementById('configHaUrl').value=appConfig.haUrl;
+  document.getElementById('configHaToken').value=appConfig.haToken;
+  document.getElementById('configModal').classList.add('show');
+  document.getElementById('configHaUrl').focus();
+}
+
+function closeConfigModal(){document.getElementById('configModal').classList.remove('show');}
+
+function confirmConfig(){
+  saveConfig({
+    epgUrl:document.getElementById('configEpgUrl').value,
+    haUrl:document.getElementById('configHaUrl').value,
+    haToken:document.getElementById('configHaToken').value
+  });
+  closeConfigModal();
+  showToast('Configurazione salvata',false);
+  loadEPG();
+}
+
+function resetEpgConfig(){
+  document.getElementById('configEpgUrl').value='';
+  saveConfig({
+    epgUrl:'',
+    haUrl:document.getElementById('configHaUrl').value,
+    haToken:document.getElementById('configHaToken').value
+  });
+  closeConfigModal();
+  showToast('Fonti EPG del server ripristinate',false);
+  loadEPG();
+}
+
+// ==========================================
+// CLOCK
+// ==========================================
+function updateClock(){
+  const n=new Date();
+  document.getElementById('clockTime').textContent=`${pad(n.getHours())}:${pad(n.getMinutes())}:${pad(n.getSeconds())}`;
+  const days=['DOM','LUN','MAR','MER','GIO','VEN','SAB'];
+  const months=['GEN','FEB','MAR','APR','MAG','GIU','LUG','AGO','SET','OTT','NOV','DIC'];
+  document.getElementById('clockDate').textContent=`${days[n.getDay()]} ${pad(n.getDate())} ${months[n.getMonth()]} ${n.getFullYear()}`;
+}
+const pad=v=>String(v).padStart(2,'0');
+setInterval(updateClock,1000); updateClock();
+
+// ==========================================
+// DAY BAR
+// ==========================================
+function buildDayBar(){
+  const bar=document.getElementById('dayBar');
+  const dn=['LUN','MAR','MER','GIO','VEN','SAB','DOM'];
+  const mn=['GEN','FEB','MAR','APR','MAG','GIU','LUG','AGO','SET','OTT','NOV','DIC'];
+  for(let i=0;i<7;i++){
+    const d=new Date(); d.setDate(d.getDate()+i);
+    const btn=document.createElement('button');
+    btn.className='day-btn'+(i===0?' active':'');
+    btn.textContent=i===0?`OGGI ${d.getDate()} ${mn[d.getMonth()]}`:i===1?`DOMANI ${d.getDate()} ${mn[d.getMonth()]}`:`${dn[(d.getDay()+6)%7]} ${d.getDate()} ${mn[d.getMonth()]}`;
+    btn.addEventListener('click',()=>{document.querySelectorAll('.day-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');selectedDay=i;renderChannels();});
+    bar.appendChild(btn);
+  }
+}
+
+// ==========================================
+// FILTER CHIPS
+// ==========================================
+function buildFilterChips(){
+  const c=document.getElementById('filterChips');
+  FILTER_GROUPS.forEach(g=>{
+    const chip=document.createElement('button');
+    chip.className='chip'+(g.id==='all'?' active':'');
+    chip.textContent=g.label;
+    chip.addEventListener('click',()=>{document.querySelectorAll('.chip').forEach(x=>x.classList.remove('active'));chip.classList.add('active');activeFilter=g.id;renderChannels();});
+    c.appendChild(chip);
+  });
+  document.getElementById('searchBox').addEventListener('input',debounce(e=>{searchQuery=e.target.value.toLowerCase();renderChannels();},180));
+}
+
+// ==========================================
+// EPG
+// ==========================================
+function buildEpgRequestUrl(){
+  const custom=(appConfig.epgUrl||'').trim();
+  const url=new URL(EPG_ENDPOINT,window.location.href);
+  if(custom) url.searchParams.set('custom',custom);
+  return url.toString();
+}
+
+async function fetchXMLTV(){
+  const url=buildEpgRequestUrl();
+  setStatus('loading','CARICAMENTO EPG DAL SERVER...');
+  const resp=await fetch(url,{signal:AbortSignal.timeout(25000),cache:'no-store'});
+  const text=await resp.text();
+  if(!resp.ok){
+    // api/epg.php risponde con JSON {error:"..."} quando nessuna fonte è raggiungibile
+    let msg=`HTTP ${resp.status}`;
+    try{ const j=JSON.parse(text); if(j.error) msg=j.error; }catch(_e){}
+    throw new Error(msg);
+  }
+  if(!text.includes('<programme')) throw new Error('Risposta EPG non valida (non XMLTV)');
+  const sourceLabel=resp.headers.get('X-EPG-Source')||'server';
+  const stale=resp.headers.get('X-EPG-Stale')==='1';
+  return {text,url:sourceLabel,stale};
+}
+
+async function loadEPG(){
+  setStatus('loading','CARICAMENTO DATI EPG...');
+  epgLoading=true;
+  epgReady=false;
+  epgError='';
+  try{
+    const {text,url,stale}=await fetchXMLTV();
+    parseXMLTV(text);
+    const totalPrograms=Object.values(epgData).reduce((sum,programs)=>sum+programs.length,0);
+    if(totalPrograms===0) throw new Error('EPG caricato, ma nessun canale configurato ha programmi corrispondenti');
+    epgReady=true;
+    epgLoading=false;
+    lastUpdate=new Date();
+    setStatus(stale?'error':'ok',`AGG: ${fmt(lastUpdate)} · ${url.toUpperCase()}${stale?' (CACHE VECCHIA)':''}`);
+    renderChannels();
+  }catch(e){
+    console.warn('EPG fetch failed:',e);
+    epgData={};
+    epgReady=false;
+    epgLoading=false;
+    epgError=e.message||'Errore sconosciuto';
+    setStatus('error','ERRORE DATI EPG REALI');
+    renderChannels();
+  }
+}
+
+function parseXMLTV(xml){
+  const doc=new DOMParser().parseFromString(xml,'text/xml');
+  if(doc.querySelector('parsererror')) throw new Error('XMLTV non valido');
+  epgData={};
+  const xmlChannels={};
+  doc.querySelectorAll('channel').forEach(channel=>{
+    const id=channel.getAttribute('id');
+    if(!id) return;
+    xmlChannels[id]=[...channel.querySelectorAll('display-name')].map(name=>name.textContent||'');
+  });
+  doc.querySelectorAll('programme').forEach(p=>{
+    const chId=p.getAttribute('channel'), startStr=p.getAttribute('start'), stopStr=p.getAttribute('stop');
+    const title=p.querySelector('title')?.textContent||'', desc=p.querySelector('desc')?.textContent||'';
+    if(!chId||!startStr) return;
+    if(normalizeChannelName(title)==='nodata') return;
+    const ch=CHANNELS_CONFIG.find(c=>channelMatches(c,chId,xmlChannels[chId]||[]));
+    if(!ch) return;
+    if(!epgData[ch.id]) epgData[ch.id]=[];
+    const start=parseXMLTVDate(startStr), stop=stopStr?parseXMLTVDate(stopStr):null;
+    if(!start) return;
+    epgData[ch.id].push({start,stop,title,desc});
+  });
+  Object.values(epgData).forEach(a=>a.sort((x,y)=>x.start-y.start));
+}
+
+function parseXMLTVDate(str){
+  const m=String(str).match(/^(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})\s*([+-])?(\d{2})?(\d{2})?/);
+  if(!m) return null;
+  const [,y,mo,d,h,mi,s,sign,tzh='00',tzm='00']=m;
+  const utc=Date.UTC(Number(y),Number(mo)-1,Number(d),Number(h),Number(mi),Number(s));
+  const offset=(Number(tzh)*60+Number(tzm))*60000*(sign==='-'?-1:1);
+  const parsed=new Date(utc-offset);
+  return Number.isNaN(parsed.getTime())?null:parsed;
+}
+
+// ==========================================
+// HELPERS
+// ==========================================
+function getTargetDate(off){const d=new Date();d.setDate(d.getDate()+off);d.setHours(0,0,0,0);return d;}
+function getFilteredChannels(){const g=FILTER_GROUPS.find(x=>x.id===activeFilter);let ch=CHANNELS_CONFIG;if(g&&g.lcns)ch=ch.filter(c=>g.lcns.includes(c.lcn));return ch.sort((a,b)=>a.lcn-b.lcn);}
+function getProgramsForDay(id,off){const t=getTargetDate(off),e=new Date(t);e.setHours(23,59,59,999);return(epgData[id]||[]).filter(p=>new Date(p.start)>=t&&new Date(p.start)<=e);}
+function getCurrentProgram(progs){const n=new Date();return progs.find(p=>{const s=new Date(p.start),e=p.stop?new Date(p.stop):new Date(s.getTime()+3600000);return n>=s&&n<e;});}
+function getProgress(p){if(!p||!p.stop)return 0;const n=new Date(),s=new Date(p.start),e=new Date(p.stop);return Math.min(100,Math.max(0,(n-s)/(e-s)*100));}
+function fmt(d){return`${pad(d.getHours())}:${pad(d.getMinutes())}`;}
+function escapeHTML(value){return String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));}
+function escapeAttr(value){return escapeHTML(value).replace(/`/g,'&#96;');}
+function debounce(fn,delay){let timer;return(...args)=>{clearTimeout(timer);timer=setTimeout(()=>fn(...args),delay);};}
+function storageKeyForTitle(chId,title){return `${chId}|${title.replace(/["\\\]]/g,'').slice(0,40)}`;}
+function normalizeChannelName(value){return String(value||'').toLowerCase().replace(/^it\s*[-.]?\s*/,'').replace(/hd\b/g,'').replace(/[^a-z0-9]/g,'');}
+function channelMatches(ch,sourceId,displayNames=[]){
+  const haystacks=[sourceId,...displayNames].map(normalizeChannelName).filter(Boolean);
+  const needles=[ch.id,ch.name,...(ch.aliases||[])].map(normalizeChannelName).filter(Boolean);
+  return haystacks.some(haystack=>needles.some(needle=>haystack.includes(needle)||needle.includes(haystack)));
+}
+
+// ==========================================
+// TMDB
+// ==========================================
+async function fetchTMDB(title){
+  const k=title.trim().toLowerCase();
+  if(tmdbCache[k]!==undefined) return tmdbCache[k];
+  tmdbCache[k]=null;
+  try{
+    const resp=await fetch(`${TMDB_ENDPOINT}?title=${encodeURIComponent(title)}`,{signal:AbortSignal.timeout(6000)});
+    if(!resp.ok) throw new Error(`TMDB proxy HTTP ${resp.status}`);
+    const r=await resp.json();
+    if(r?.poster) return tmdbCache[k]={poster:r.poster,overview:r.overview||'',type:r.type||'tv'};
+  }catch(e){console.warn('TMDB fetch failed:',e);}
+  return null;
+}
+
+async function loadPostersForChannel(chId,programs){
+  for(const p of programs.slice(0,8)){
+    const k=p.title.trim().toLowerCase();
+    const res=tmdbCache[k]!==undefined?tmdbCache[k]:await fetchTMDB(p.title);
+    updatePosterInDOM(chId,p.title,res);
+    await new Promise(r=>setTimeout(r,100));
+  }
+  programs.slice(8).forEach(p=>updatePosterInDOM(chId,p.title,null));
+}
+
+function updatePosterInDOM(chId,title,result){
+  const key=storageKeyForTitle(chId,title);
+  const el=[...document.querySelectorAll('.prog-poster')].find(poster=>poster.dataset.posterTitle===key);
+  if(!el) return;
+  const ph=el.querySelector('.poster-placeholder');
+  let img=el.querySelector('img');
+  if(result?.poster){
+    if(ph) ph.remove();
+    if(!img){img=document.createElement('img');el.appendChild(img);}
+    img.alt=title; img.onload=()=>img.classList.add('loaded'); img.src=result.poster;
+    const item=el.closest('.program-item');
+    const desc=item?.querySelector('.prog-desc');
+    if(desc&&!desc.dataset.hasContent&&result.overview){
+      desc.textContent=result.overview; desc.dataset.hasContent='1';
+      const btn=item.querySelector('.prog-expand-btn');
+      if(btn&&result.overview.length>100) btn.style.display='inline';
+    }
+  } else if(ph){
+    ph.innerHTML=`<span style="font-size:1.1rem">📺</span><span style="font-size:0.45rem;line-height:1.2;padding:2px">${escapeHTML(title.slice(0,10))}</span>`;
+  }
+}
+
+function toggleDesc(btn){
+  const d=btn.previousElementSibling;
+  if(d.classList.contains('clamped')){d.classList.remove('clamped');btn.textContent='▲ MENO';}
+  else{d.classList.add('clamped');btn.textContent='▼ PIÙ';}
+}
+
+// ==========================================
+// RENDER CHANNELS
+// ==========================================
+function renderChannels(){
+  const main=document.getElementById('mainContent');
+  main.innerHTML='';
+  if(epgLoading){
+    main.innerHTML=`<div class="loading-state">
+      <div>ACQUISIZIONE DATI EPG REALI</div>
+      <div class="loading-bar"><div class="loading-bar-fill"></div></div>
+      <div style="font-size:0.55rem;margin-top:8px;color:var(--text-dim)">FONTE: XMLTV CONFIGURATA</div>
+    </div>`;
+    return;
+  }
+  if(!epgReady){
+    main.innerHTML=`<div class="error-state">
+      <h3>DATI EPG NON DISPONIBILI</h3>
+      <p>${escapeHTML(epgError||'La guida usa solo dati reali: nessun dato demo viene mostrato.')}</p>
+      <div class="modal-actions" style="justify-content:center;margin-top:14px">
+        <button class="btn-confirm" id="btnRetryEpg" type="button" style="max-width:160px;flex:0 1 160px">RIPROVA</button>
+        <button class="btn-cancel" id="btnConfigFromError" type="button">CONFIG</button>
+      </div>
+    </div>`;
+    document.getElementById('btnRetryEpg').addEventListener('click',loadEPG);
+    document.getElementById('btnConfigFromError').addEventListener('click',openConfigModal);
+    return;
+  }
+  const channels=getFilteredChannels();
+  const isToday=selectedDay===0;
+
+  channels.forEach(ch=>{
+    const programs=getProgramsForDay(ch.id,selectedDay);
+    const match=!searchQuery||ch.name.toLowerCase().includes(searchQuery)||programs.some(p=>p.title.toLowerCase().includes(searchQuery)||(p.desc&&p.desc.toLowerCase().includes(searchQuery)));
+    if(!match) return;
+
+    const cur=isToday?getCurrentProgram(programs):null;
+    const pct=cur?getProgress(cur):0;
+    const card=document.createElement('div');
+    card.className='channel-card';
+    const chName=escapeHTML(ch.name);
+    const logoFallback=escapeAttr(ch.name.slice(0,3).toUpperCase());
+    const currentMarkup=cur
+      ? `<strong>${escapeHTML(cur.title)}</strong> <span style="color:var(--text-dim);font-size:0.75rem">${fmt(new Date(cur.start))}–${cur.stop?fmt(new Date(cur.stop)):''}</span><div class="prog-progress"><div class="prog-progress-fill" style="width:${pct}%"></div></div>`
+      : programs.length===0
+        ? '<span style="color:var(--text-dim)">Nessun dato</span>'
+        : `<span style="color:var(--text-dim)">${programs.length} programmi</span>`;
+
+    card.innerHTML=`
+      <div class="channel-header" role="button" tabindex="0" aria-expanded="false">
+        <div class="ch-number">${ch.lcn}</div>
+        <div class="ch-logo"><img src="https://github.com/tv-logo/tv-logos/raw/main/countries/italy/${escapeAttr(ch.id)}.png" alt="${escapeAttr(ch.name)}"></div>
+        <div class="ch-name">${chName}</div>
+        <div class="ch-current">
+          ${currentMarkup}
+        </div>
+        ${isToday&&cur?'<span class="live-badge">LIVE</span>':''}
+        <span class="expand-icon">▼</span>
+      </div>
+      <div class="program-list" id="plist-${escapeAttr(ch.id)}">
+        ${programs.length===0
+          ?'<div style="padding:16px;text-align:center;color:var(--text-dim);font-size:0.8rem">Nessun dato EPG per questo canale</div>'
+          :programs.map(p=>{
+            const ps=new Date(p.start), pe=p.stop?new Date(p.stop):null;
+            const isNow=isToday&&cur===p;
+            const dur=pe?Math.round((pe-ps)/60000):null;
+            const safe=escapeAttr(storageKeyForTitle(ch.id,p.title));
+            const hasdesc=p.desc&&p.desc.length>0;
+            return`<div class="program-item ${isNow?'is-now':''}">
+              <div class="prog-time">${fmt(ps)}</div>
+              <div class="prog-poster" data-poster-title="${safe}">
+                <div class="poster-placeholder"><div class="poster-loading"></div></div>
+              </div>
+              <div class="prog-info">
+                <div class="prog-title">${escapeHTML(p.title)}</div>
+                <div class="prog-desc clamped" ${hasdesc?'data-has-content="1"':''}>${hasdesc?escapeHTML(p.desc):''}</div>
+                <button class="prog-expand-btn" type="button" style="display:${hasdesc&&p.desc.length>100?'inline':'none'}">▼ PIÙ</button>
+                ${isNow?`<div class="prog-progress" style="margin-top:6px"><div class="prog-progress-fill" style="width:${getProgress(p)}%"></div></div>`:''}
+              </div>
+              ${dur?`<div class="prog-duration">${dur}m</div>`:''}
+              ${isNow?`<button class="open-tv-btn" type="button" data-ch-id="${escapeAttr(ch.id)}" data-ch-name="${escapeAttr(ch.name)}" data-prog-title="${escapeAttr(p.title)}" data-app-key="${escapeAttr(ch.app)}" data-lcn="${ch.lcn}" data-tv-link="${escapeAttr(ch.tvLink||'')}">▶ TV</button>`:''}
+            </div>`;
+          }).join('')
+        }
+      </div>`;
+    const header=card.querySelector('.channel-header');
+    const logoImg=card.querySelector('.ch-logo img');
+    logoImg.addEventListener('error',()=>{logoImg.parentElement.textContent=logoFallback;});
+    header.addEventListener('click',()=>toggleCard(header));
+    header.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();toggleCard(header);}});
+    card.querySelectorAll('.prog-expand-btn').forEach(btn=>btn.addEventListener('click',()=>toggleDesc(btn)));
+    card.querySelectorAll('.open-tv-btn').forEach(btn=>btn.addEventListener('click',e=>openTVModal(e,btn.dataset.chId,btn.dataset.chName,btn.dataset.progTitle,btn.dataset.appKey,Number(btn.dataset.lcn),btn.dataset.tvLink||null)));
+    main.appendChild(card);
+  });
+
+  if(!main.querySelector('.channel-card')){
+    main.innerHTML='<div class="error-state"><h3>NESSUN RISULTATO</h3><p>Nessun canale o programma trovato.</p></div>';
+  }
+}
+
+function toggleCard(header){
+  const card=header.closest('.channel-card');
+  card.classList.toggle('expanded');
+  header.setAttribute('aria-expanded',card.classList.contains('expanded')?'true':'false');
+  if(card.classList.contains('expanded')&&!card.dataset.postersLoaded){
+    card.dataset.postersLoaded='1';
+    const chId=card.querySelector('.program-list')?.id?.replace('plist-','');
+    if(chId) loadPostersForChannel(chId,getProgramsForDay(chId,selectedDay));
+  }
+}
+
+// ==========================================
+// TV MODAL
+// ==========================================
+function openTVModal(event,chId,chName,progTitle,appKey,lcn,tvLink){
+  event.stopPropagation();
+  modalChannelData={chId,chName,progTitle,appKey,lcn,tvLink};
+  selectedTV=null;
+  document.getElementById('modalProgram').textContent=progTitle;
+  document.getElementById('modalChannel').textContent=`${chName} · LCN ${lcn}`;
+  document.getElementById('actionInfo').textContent='Seleziona un televisore per vedere le azioni disponibili.';
+  document.getElementById('btnConfirm').disabled=true;
+  document.getElementById('btnConfirm').textContent='INVIA ALLA TV';
+  document.getElementById('btnSala').classList.remove('selected');
+  document.getElementById('btnCucina').classList.remove('selected');
+  const pb=document.getElementById('modalPosterBox');
+  pb.innerHTML='<div class="poster-placeholder"><div class="poster-loading"></div></div>';
+  document.getElementById('modalOverview').textContent='';
+  fetchTMDB(progTitle).then(r=>{
+    const box=document.getElementById('modalPosterBox');
+    if(!box) return;
+    if(r?.poster){
+      box.innerHTML='';
+      const img=document.createElement('img');
+      img.alt=progTitle; img.onload=()=>img.classList.add('loaded'); img.src=r.poster;
+      box.appendChild(img);
+      if(r.overview) document.getElementById('modalOverview').textContent=r.overview;
+    } else {
+      box.innerHTML=`<div class="poster-placeholder"><span style="font-size:1.4rem">📺</span><span style="font-size:0.5rem;padding:4px;text-align:center">${escapeHTML(progTitle.slice(0,15))}</span></div>`;
+    }
+  });
+  document.getElementById('tvModal').classList.add('show');
+  document.getElementById('btnSala').focus();
+}
+
+function closeModal(){document.getElementById('tvModal').classList.remove('show');selectedTV=null;}
+
+function selectTV(tv){
+  selectedTV=tv;
+  document.getElementById('btnSala').classList.toggle('selected',tv==='sala');
+  document.getElementById('btnCucina').classList.toggle('selected',tv==='cucina');
+  const app=APP_IDS[modalChannelData.appKey]||APP_IDS.dtt;
+  const tvName=tv==='sala'?'TV Sala (Sony KE-55A89)':'TV Cucina (Sony KD-43X81J)';
+  document.getElementById('actionInfo').textContent=`📺 ${tvName}\n`+(app.appId?`1. Accensione TV (se spenta)\n2. Apertura app: ${app.name}\n3. Avvio canale in diretta`:`1. Accensione TV (se spenta)\n2. Sorgente: Digitale Terrestre\n3. LCN ${modalChannelData.lcn}`);
+  document.getElementById('btnConfirm').disabled=false;
+}
+
+async function confirmAction(){
+  if(!selectedTV) return;
+  if(!appConfig.haToken){
+    showToast('Configura prima il token Home Assistant',true);
+    openConfigModal();
+    return;
+  }
+  const entity=TV_ENTITIES[selectedTV];
+  const app=APP_IDS[modalChannelData.appKey]||APP_IDS.dtt;
+  const tvName=selectedTV==='sala'?'TV Sala':'TV Cucina';
+  document.getElementById('btnConfirm').disabled=true;
+  document.getElementById('btnConfirm').textContent='INVIO...';
+  try{
+    await callHA('media_player/turn_on',{entity_id:entity});
+    await sleep(1500);
+    if(app.source){await callHA('media_player/select_source',{entity_id:entity,source:app.source});await sleep(1000);}
+    if(modalChannelData.tvLink) await callHA('media_player/play_media',{entity_id:entity,media_content_id:modalChannelData.tvLink,media_content_type:'url'});
+    closeModal();
+    showToast(`✓ Comando inviato a ${tvName}`,false);
+  }catch(err){
+    console.error(err);
+    showToast(`✗ Errore: ${err.message}`,true);
+    document.getElementById('btnConfirm').disabled=false;
+    document.getElementById('btnConfirm').textContent='INVIA ALLA TV';
+  }
+}
+
+async function callHA(service,data){
+  if(!appConfig.haUrl&&!window.location.hostname){
+    throw new Error('Configura Home Assistant URL');
+  }
+  const baseUrl=appConfig.haUrl.replace(/\/$/,'');
+  const resp=await fetch(`${baseUrl}/api/services/${service}`,{
+    method:'POST',
+    headers:{'Content-Type':'application/json','Authorization':`Bearer ${appConfig.haToken}`},
+    body:JSON.stringify(data)
+  });
+  if(!resp.ok){const t=await resp.text().catch(()=>resp.statusText);throw new Error(t||`HTTP ${resp.status}`);}
+  return resp.json().catch(()=>({}));
+}
+
+function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
+function setStatus(type,text){
+  document.getElementById('epgDot').className='dot '+(type==='loading'?'loading':type==='error'?'error':'');
+  document.getElementById('epgStatusText').textContent=text;
+}
+function showToast(msg,isError){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.className='toast show'+(isError?' error':'');
+  setTimeout(()=>{t.className='toast'+(isError?' error':'');},4000);
+}
+
+document.getElementById('btnConfig').addEventListener('click',openConfigModal);
+document.getElementById('btnSaveConfig').addEventListener('click',confirmConfig);
+document.getElementById('btnResetEpg').addEventListener('click',resetEpgConfig);
+document.getElementById('btnCloseConfig').addEventListener('click',closeConfigModal);
+document.getElementById('btnSala').addEventListener('click',()=>selectTV('sala'));
+document.getElementById('btnCucina').addEventListener('click',()=>selectTV('cucina'));
+document.getElementById('btnConfirm').addEventListener('click',confirmAction);
+document.getElementById('btnCancelTv').addEventListener('click',closeModal);
+document.getElementById('tvModal').addEventListener('click',e=>{if(e.target===e.currentTarget)closeModal();});
+document.getElementById('configModal').addEventListener('click',e=>{if(e.target===e.currentTarget)closeConfigModal();});
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'){
+    closeModal();
+    closeConfigModal();
+  }
+});
+setInterval(loadEPG,3600000);
+setInterval(()=>{if(selectedDay===0)renderChannels();},60000);
+
+buildDayBar();
+buildFilterChips();
+loadEPG();
+</script>
+</body>
+</html>
