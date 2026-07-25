@@ -31,7 +31,7 @@ return [
 
     // La tua API key di TMDB (https://www.themoviedb.org/settings/api).
     // Non viene MAI inviata al browser: resta solo su questo server.
-    'tmdb_api_key' => 'ad3bf71ff4d755f58d96be9435142518',
+    'tmdb_api_key' => 'INSERISCI_QUI_LA_TUA_TMDB_API_KEY',
 
     // Per quanto tempo (secondi) tenere in cache il risultato TMDB di un
     // singolo titolo. 604800 = 7 giorni: i poster non cambiano spesso.
@@ -40,7 +40,7 @@ return [
     'tmdb_fetch_timeout' => 6,
 
     // User-Agent onesto da presentare alle fonti remote.
-    'user_agent' => 'GuidaTV-CasaGorgonzola/1.0 (+https://www.marianhala.it)',
+    'user_agent' => 'GuidaTV/1.0 (+https://www.tuosito.com)',
 
     // Cartella cache (relativa a questo file). Deve essere scrivibile dal
     // processo PHP (permessi 775 o 755 a seconda dell'hosting).
