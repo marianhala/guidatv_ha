@@ -1,5 +1,8 @@
 # Guida TV — Home Assistant (versione deployabile)
 # 
+
+Published under the MIT license - See LICENSE file for more details.
+
 Guida TV interattiva: palinsesto in tempo reale di oltre 30 canali italiani (Rai, Mediaset, La7, Discovery+), con navigazione per giorno, filtri per gruppo, ricerca programmi, poster e trame da TMDB, orologio stile Casio e comando diretto delle TV tramite Home Assistant. Estetica dark cyberpunk. esempio live: https://marianhala.it/ha/guidatv_v2/index.html
 ## Struttura
 
